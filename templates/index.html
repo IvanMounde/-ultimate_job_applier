@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Job Application Assistant - Powered by DeepSeek</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .progress-step { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%); color: #6b7280; display: flex; align-items: center; justify-content: center; font-weight: 700; transition: all 0.5s ease; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .progress-step.completed { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; transform: scale(1.1); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+        .progress-step.active { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .upload-area { transition: all 0.3s ease; border: 2px dashed #cbd5e1; }
+        .upload-area:hover { border-color: #667eea; background: rgba(102, 126, 234, 0.05); transform: translateY(-2px); }
+        .upload-area.drag-over { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all 0.3s ease; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar-animated { background: linear-gradient(90deg, #667eea, #764ba2, #667eea); background-size: 200% 100%; animation: gradient-move 2s linear infinite; }
+        @keyframes gradient-move { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        .color-preview { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+        .color-preview:hover { transform: scale(1.1); border-color: #667eea; }
+        .color-preview.selected { border: 3px solid #667eea; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2); }
+        .status-processing { color: #3b82f6; font-weight: 600; }
+        .status-completed { color: #10b981; font-weight: 600; }
+        .status-error { color: #ef4444; font-weight: 600; }
+        .preview-document { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; max-height: 500px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .preview-document::-webkit-scrollbar { width: 8px; }
+        .preview-document::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .preview-document::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .preview-document::-webkit-scrollbar-thumb:hover { background: #555; }
+        .document-tab { cursor: pointer; padding: 12px 24px; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .document-tab.active { border-bottom-color: #667eea; color: #667eea; font-weight: 600; }
+        .document-tab:hover { background: rgba(102, 126, 234, 0.1); }
+        .document-content { 
+            font-family: 'Inter', sans-serif; 
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        .document-content h4 {
+            color: #1f2937;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+        .document-content ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+        .document-content li {
+            margin-bottom: 8px;
+        }
+        .feedback-section {
+            transition: all 0.3s ease;
+        }
+        .document-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .email-field-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .improve-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        .improve-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        .email-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .email-preview-header {
+            color: #475569;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .email-preview-body {
+            color: #64748b;
+            white-space: pre-wrap;
+        }
+        .generated-tag {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        .ai-generated-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
+        }
+        .email-content-section {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #bae6fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .email-content-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .ai-thinking {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .ai-thinking-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .ai-thinking-dots span {
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .ai-thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .ai-thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        .email-quality-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .email-preview-box {
+            background: white;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        .email-subject-line {
+            font-weight: 700;
+            color: #1e40af;
+            padding: 8px 12px;
+            background: #eff6ff;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 12px;
+        }
+        .email-body-content {
+            color: #374151;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        .email-highlight {
+            background: linear-gradient(120deg, #fef3c7 0%, transparent 100%);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        .feedback-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .feedback-tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: #f3f4f6;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .feedback-tab.active {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+        }
+        .feedback-tab:hover:not(.active) {
+            background: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Hero Section -->
+    <div class="gradient-bg text-white py-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h1 class="text-5xl md:text-6xl font-bold mb-4 animate-fade-in">AI Job Application Assistant</h1>
+                <p class="text-xl md:text-2xl mb-2 opacity-90">Powered by DeepSeek AI</p>
+                <p class="text-lg opacity-80">Transform your CV and create tailored cover letters & emails in minutes</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+        <!-- Features Banner -->
+        <div class="max-w-5xl mx-auto mb-12 grid md:grid-cols-4 gap-6">
+            <div class="bg-white rounded-lg p-6 shadow-md text-center">
+                <div class="text-4xl mb-3">🎯</div>
+                <h3 class="font-bold text-lg mb-2">ATS-Optimized</h3>
+                <p class="text-gray-600 text-sm">Beat applicant tracking systems</p>
+            </div>
+            <div class="bg-white rounded-lg p-6 shadow-md text-center">
+                <div class="text-4xl mb-3">✉️</div>
+                <h3 class="font-bold text-lg mb-2">AI-Generated Emails</h3>
+                <p class="text-gray-600 text-sm">Tailored email content</p>
+            </div>
+            <div class="bg-white rounded-lg p-6 shadow-md text-center">
+                <div class="text-4xl mb-3">⚡</div>
+                <h3 class="font-bold text-lg mb-2">Fast & Smart</h3>
+                <p class="text-gray-600 text-sm">AI-powered processing</p>
+            </div>
+            <div class="bg-white rounded-lg p-6 shadow-md text-center">
+                <div class="text-4xl mb-3">🎨</div>
+                <h3 class="font-bold text-lg mb-2">Custom Styling</h3>
+                <p class="text-gray-600 text-sm">Choose colors and fonts</p>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12 mb-8 fade-in">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Get Started</h2>
+                
+                <!-- CV Upload -->
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        📋 Upload Your CV <span class="text-red-500">*</span>
+                    </label>
+                    <div class="upload-area border-2 border-dashed rounded-xl p-8 text-center cursor-pointer">
+                        <input type="file" id="cvFile" name="cv" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.bmp,.tiff" class="hidden" required>
+                        <div id="cvUploadArea">
+                            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <p class="text-lg text-gray-700 font-medium mb-2">Click to upload your CV</p>
+                            <p class="text-sm text-gray-500">PDF, DOC, DOCX, TXT, or Images (Max 16MB)</p>
+                        </div>
+                        <div id="cvFileName" class="mt-4 text-sm text-green-600 font-medium hidden"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Supports multiple formats including images (OCR)</p>
+                </div>
+
+                <!-- Job Information -->
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        💼 Job Information <span class="text-red-500">*</span>
+                    </label>
+                    <div class="space-y-4">
+                        <div>
+                            <input type="url" id="jobLink" name="job_link" 
+                                   placeholder="🔗 Paste job posting URL (e.g., LinkedIn, Indeed)"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                        </div>
+                        <div class="flex items-center">
+                            <div class="flex-grow border-t-2 border-gray-300"></div>
+                            <span class="mx-4 text-sm font-semibold text-gray-500">OR</span>
+                            <div class="flex-grow border-t-2 border-gray-300"></div>
+                        </div>
+                        <div class="upload-area border-2 border-dashed rounded-lg p-6 text-center cursor-pointer">
+                            <input type="file" id="jobFile" name="job_description" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.bmp,.tiff" class="hidden">
+                            <div id="jobUploadArea">
+                                <p class="text-base text-gray-700 font-medium mb-1">Upload job description file</p>
+                                <p class="text-sm text-gray-500">PDF, DOC, DOCX, TXT, or Images</p>
+                            </div>
+                            <div id="jobFileName" class="mt-3 text-sm text-green-600 font-medium hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Styling Customization Section -->
+                <div class="mb-8 p-6 bg-purple-50 rounded-xl border-2 border-purple-200">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">🎨</span> Customize Your Document Style
+                    </h3>
+                    
+                    <!-- Highlight Color Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Section Highlight Color</label>
+                        <div class="flex flex-wrap gap-3">
+                            <div class="color-preview selected" data-color="BFBFBF" style="background-color: #BFBFBF;" title="Light Gray (Default)"></div>
+                            <div class="color-preview" data-color="D4EDFF" style="background-color: #D4EDFF;" title="Light Blue"></div>
+                            <div class="color-preview" data-color="FFE5D4" style="background-color: #FFE5D4;" title="Light Peach"></div>
+                            <div class="color-preview" data-color="D4FFE5" style="background-color: #D4FFE5;" title="Light Green"></div>
+                            <div class="color-preview" data-color="FFD4E5" style="background-color: #FFD4E5;" title="Light Pink"></div>
+                            <div class="color-preview" data-color="FFFACD" style="background-color: #FFFACD;" title="Light Yellow"></div>
+                            <div class="color-preview" data-color="E5D4FF" style="background-color: #E5D4FF;" title="Light Purple"></div>
+                        </div>
+                        <input type="hidden" id="highlightColor" name="highlight_color" value="BFBFBF">
+                    </div>
+
+                    <!-- Font Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Font Family</label>
+                        <select id="fontFamily" name="font_family" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="Calibri" selected>Calibri (Recommended)</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Tahoma">Tahoma</option>
+                        </select>
+                    </div>
+
+                    <!-- Font Size Selection -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Base Font Size</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="fontSize" name="font_size" min="9" max="12" value="10" step="0.5" 
+                                   class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <span id="fontSizeDisplay" class="text-lg font-bold text-purple-600 min-w-[60px]">10pt</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>9pt (Compact)</span>
+                            <span>12pt (Large)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full btn-primary text-white py-4 px-6 rounded-xl font-bold text-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-purple-300">
+                    ✨ Generate Complete Application Package
+                </button>
+                <p class="text-center text-gray-500 text-sm mt-4">AI will generate: Optimized CV, Cover Letter, and Tailored Email</p>
+            </form>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progressSection" class="max-w-4xl mx-auto hidden fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2 text-center">AI is Creating Your Application</h2>
+                <p class="text-center text-gray-600 mb-8">DeepSeek AI is generating all documents including tailored email...</p>
+                <div class="mb-8">
+                    <div class="flex justify-between mb-3">
+                        <span id="progressPercentage" class="text-lg font-bold text-purple-600">0%</span>
+                        <span id="progressMessage" class="text-sm text-gray-600 font-medium">Starting...</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
+                        <div id="progressBar" class="progress-bar-animated h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div id="currentStatus" class="mt-2 text-sm text-center hidden">
+                        Status: <span id="statusText" class="status-processing">Processing</span>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex items-center">
+                        <div class="progress-step completed"><span>✓</span></div>
+                        <div class="ml-4">
+                            <p class="text-gray-800 font-semibold">File Upload & Analysis</p>
+                            <p class="text-gray-500 text-sm">Documents received and analyzed</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="progress-step" id="step2">2</div>
+                        <div class="ml-4">
+                            <p class="text-gray-800 font-semibold" id="step2Text">AI Document Generation</p>
+                            <p class="text-gray-500 text-sm">Creating CV, Cover Letter, and Email</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="progress-step" id="step3">3</div>
+                        <div class="ml-4">
+                            <p class="text-gray-800 font-semibold" id="step3Text">Email Content Generation</p>
+                            <p class="text-gray-500 text-sm">AI is creating personalized email content</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="progress-step" id="step4">4</div>
+                        <div class="ml-4">
+                            <p class="text-gray-800 font-semibold" id="step4Text">Quality Check</p>
+                            <p class="text-gray-500 text-sm">Reviewing and formatting all documents</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                    <p class="text-blue-800 text-sm"><strong>🤖 AI-Powered Email Generation:</strong> DeepSeek is analyzing your job description and CV to create a perfectly tailored email for your application!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div id="previewSection" class="max-w-6xl mx-auto hidden fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                <div class="text-center mb-8">
+                    <div class="text-5xl mb-4">🎁</div>
+                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Your Complete Application Package</h2>
+                    <p class="text-gray-600">Review all AI-generated documents before proceeding</p>
+                </div>
+
+                <!-- Document Tabs -->
+                <div class="flex border-b-2 border-gray-200 mb-6">
+                    <div class="document-tab active" data-tab="cv">
+                        <span class="text-xl mr-2">📋</span> Optimized CV
+                    </div>
+                    <div class="document-tab" data-tab="cover">
+                        <span class="text-xl mr-2">✉️</span> Cover Letter
+                    </div>
+                    <div class="document-tab" data-tab="email">
+                        <span class="text-xl mr-2">📧</span> AI-Generated Email
+                        <span class="ai-generated-badge ml-2">AI</span>
+                    </div>
+                </div>
+
+                <!-- Preview Content -->
+                <div class="mb-8">
+                    <!-- CV Preview -->
+                    <div id="cvPreview" class="preview-document">
+                        <div class="text-center py-12">
+                            <div class="ai-thinking mb-4">
+                                <span>🤖 AI is preparing your CV...</span>
+                                <div class="ai-thinking-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">DeepSeek is optimizing your resume for ATS systems...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Cover Letter Preview -->
+                    <div id="coverPreview" class="preview-document hidden">
+                        <div class="text-center py-12">
+                            <div class="ai-thinking mb-4">
+                                <span>🤖 AI is writing your cover letter...</span>
+                                <div class="ai-thinking-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">Tailoring your cover letter to match the job requirements...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Email Preview -->
+                    <div id="emailPreview" class="preview-document hidden">
+                        <div id="emailContentPlaceholder" class="text-center py-12">
+                            <div class="ai-thinking mb-4">
+                                <span>🤖 AI is crafting your email...</span>
+                                <div class="ai-thinking-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">Generating personalized email content based on your job description...</p>
+                        </div>
+                        <div id="emailContentDisplay" class="hidden">
+                            <div class="email-content-section">
+                                <div class="email-content-header">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                                            <span class="mr-2">📧</span> AI-Generated Email
+                                            <span class="ai-generated-badge ml-2">PERSONALIZED</span>
+                                        </h3>
+                                        <p class="text-sm text-gray-600 mt-1">Tailored specifically for your job application</p>
+                                    </div>
+                                    <div class="email-quality-badge">
+                                        <span>✨</span>
+                                        AI-Enhanced
+                                    </div>
+                                </div>
+                                
+                                <div class="email-preview-box">
+                                    <div class="email-subject-line" id="aiEmailSubject">
+                                        [AI is generating subject line...]
+                                    </div>
+                                    <div class="email-body-content" id="aiEmailBody">
+                                        Dear Hiring Manager,
+
+AI is analyzing your job description and CV to create a perfectly tailored email that highlights your qualifications and matches the job requirements.
+
+This email will include:
+• Personalized introduction
+• Key skill matching
+• Professional tone
+• Call to action
+
+Please wait while AI completes the email content...
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
+                                    <p class="text-green-800 text-sm font-semibold">✅ Benefits of AI-Generated Email:</p>
+                                    <ul class="text-green-700 text-sm mt-2 space-y-1">
+                                        <li>• Personalized content based on your specific job application</li>
+                                        <li>• Professional tone that matches industry standards</li>
+                                        <li>• Highlighted skills that match job requirements</li>
+                                        <li>• Time-saving automation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 text-sm text-gray-600">
+                                <p><strong>💡 Pro Tip:</strong> You can edit this AI-generated email in the next step to add personal touches or specific details.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Preview Section (Legacy - kept for compatibility) -->
+                <div class="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">✉️</span> Preview Generated Email
+                        <span class="generated-tag ml-2">AI-GENERATED</span>
+                    </h3>
+                    
+                    <div class="email-preview">
+                        <div class="email-preview-header">
+                            <span>📧 Subject:</span>
+                            <span id="previewEmailSubject" class="font-semibold text-gray-800">AI is generating personalized subject...</span>
+                        </div>
+                        <div class="email-preview-header mt-4">
+                            <span>💬 Message:</span>
+                        </div>
+                        <div id="previewEmailBody" class="email-preview-body mt-2">
+                            🤖 DeepSeek AI is analyzing your job description and CV to create a perfectly tailored email...
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-sm text-gray-600">
+                        <p>✅ <strong>Smart AI Email Generation:</strong> The system analyzes your job description and CV to create professional, personalized email content.</p>
+                    </div>
+                </div>
+
+                <!-- Feedback Section -->
+                <div class="feedback-section mb-8 p-6 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg hidden" id="feedbackSection">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">✏️</span> Request Changes
+                    </h3>
+                    <p class="text-gray-600 mb-4">Found something to improve? Specify your changes below and regenerate documents.</p>
+                    
+                    <!-- Feedback Tabs -->
+                    <div class="feedback-tabs">
+                        <div class="feedback-tab active" data-feedback-tab="cv">📋 CV/Resume</div>
+                        <div class="feedback-tab" data-feedback-tab="cover">✉️ Cover Letter</div>
+                        <div class="feedback-tab" data-feedback-tab="email">📧 Email Content</div>
+                    </div>
+                    
+                    <!-- CV Feedback -->
+                    <div id="cvFeedbackTab" class="feedback-tab-content">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            📋 CV/Resume Changes
+                        </label>
+                        <textarea id="cvFeedback" rows="3" 
+                                  placeholder="e.g., Add more technical skills, emphasize leadership experience, correct dates, change formatting, add specific projects, etc."
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition resize-vertical"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">What changes would you like in your CV?</p>
+                    </div>
+                    
+                    <!-- Cover Letter Feedback -->
+                    <div id="coverFeedbackTab" class="feedback-tab-content hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            ✉️ Cover Letter Changes
+                        </label>
+                        <textarea id="coverFeedback" rows="3" 
+                                  placeholder="e.g., Make it more enthusiastic, highlight specific projects, adjust tone, make it more concise, emphasize different skills, etc."
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition resize-vertical"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">What changes would you like in your cover letter?</p>
+                    </div>
+                    
+                    <!-- Email Feedback -->
+                    <div id="emailFeedbackTab" class="feedback-tab-content hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            📧 Email Content Changes
+                        </label>
+                        <textarea id="emailFeedback" rows="3" 
+                                  placeholder="e.g., Make subject more catchy, adjust tone in email body, make it more concise, add specific references to job requirements, change call to action, etc."
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition resize-vertical"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">What changes would you like in your AI-generated email?</p>
+                        <div class="mt-3 p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-blue-700">
+                                <strong>💡 Tip:</strong> You can request specific changes to the AI-generated email, such as:
+                            </p>
+                            <ul class="text-sm text-blue-600 mt-1 ml-4 list-disc">
+                                <li>Make it more formal/casual</li>
+                                <li>Add specific company details</li>
+                                <li>Change the tone or enthusiasm level</li>
+                                <li>Include specific achievements</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 mt-6">
+                        <button onclick="cancelFeedback()" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">
+                            Cancel
+                        </button>
+                        <button onclick="submitFeedback()" class="px-6 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-lg hover:from-yellow-700 hover:to-orange-700 transition font-semibold">
+                            🔄 Apply Changes & Regenerate
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="showFeedback()" class="px-8 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition font-semibold shadow-lg">
+                        ✏️ Request Changes
+                    </button>
+                    <button onclick="proceedToEmail()" class="px-8 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition font-semibold shadow-lg">
+                        ✅ Proceed with Submission
+                    </button>
+                </div>
+                
+                <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                    <p class="text-blue-800 text-sm"><strong>📌 Note:</strong> You can request changes to any document (CV, Cover Letter, or Email) as many times as needed. The AI will regenerate them with your specific feedback.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Submission Section -->
+        <div id="emailSection" class="max-w-4xl mx-auto hidden fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                <div class="text-center mb-8">
+                    <div class="text-5xl mb-4">📧</div>
+                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Send Your Application</h2>
+                    <p class="text-gray-600">Review and customize your AI-generated email before sending</p>
+                </div>
+
+                <form id="emailForm" class="space-y-6">
+                    <!-- Recipient Email (Required) -->
+                    <div>
+                        <div class="email-field-header">
+                            <label class="text-sm font-semibold text-gray-700">
+                                📬 Recipient Email <span class="text-red-500">*</span>
+                            </label>
+                        </div>
+                        <input type="email" id="recipientEmail" name="recipient_email" required
+                               placeholder="hiring@company.com"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                        <p class="text-xs text-gray-500 mt-2">The primary recipient of your application</p>
+                    </div>
+
+                    <!-- CC Emails (Optional) -->
+                    <div>
+                        <div class="email-field-header">
+                            <label class="text-sm font-semibold text-gray-700">
+                                📎 CC (Carbon Copy) - Optional
+                            </label>
+                        </div>
+                        <input type="text" id="ccEmails" name="cc_emails"
+                               placeholder="hr@company.com, manager@company.com (separate with commas)"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                        <p class="text-xs text-gray-500 mt-2">Additional recipients who will see the email</p>
+                    </div>
+
+                    <!-- BCC Emails (Optional) -->
+                    <div>
+                        <div class="email-field-header">
+                            <label class="text-sm font-semibold text-gray-700">
+                                🔒 BCC (Blind Carbon Copy) - Optional
+                            </label>
+                        </div>
+                        <input type="text" id="bccEmails" name="bcc_emails"
+                               placeholder="yourself@email.com (for your records)"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                        <p class="text-xs text-gray-500 mt-2">Hidden recipients (e.g., send a copy to yourself)</p>
+                    </div>
+
+                    <!-- Email Subject -->
+                    <div>
+                        <div class="email-field-header">
+                            <label class="text-sm font-semibold text-gray-700">
+                                📝 Email Subject <span class="text-red-500">*</span>
+                                <span class="ai-generated-badge">AI-GENERATED</span>
+                            </label>
+                            <button type="button" onclick="generateBetterEmail()" class="improve-btn">
+                                ✨ Improve
+                            </button>
+                        </div>
+                        <input type="text" id="emailSubject" name="email_subject" required
+                               placeholder="AI is generating personalized subject..."
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                        <div class="text-xs text-gray-500 mt-2 flex items-center">
+                            <span>✅ AI-generated based on job description</span>
+                        </div>
+                    </div>
+
+                    <!-- Email Message -->
+                    <div>
+                        <div class="email-field-header">
+                            <label class="text-sm font-semibold text-gray-700">
+                                💬 Email Message - Customize as needed
+                                <span class="ai-generated-badge">AI-GENERATED</span>
+                            </label>
+                            <button type="button" onclick="generateBetterEmail()" class="improve-btn">
+                                ✨ Improve
+                            </button>
+                        </div>
+                        <textarea id="emailMessage" name="email_message" rows="8"
+                                  placeholder="🤖 AI is generating personalized email content based on your job description and CV...\n\nPlease wait or click 'Improve' to regenerate."
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition resize-vertical"></textarea>
+                        <div class="text-xs text-gray-500 mt-2 flex items-center">
+                            <span>✅ AI-powered content generation</span>
+                            <span class="mx-2">•</span>
+                            <span>Click "Improve" for alternative versions</span>
+                            <span class="mx-2">•</span>
+                            <span>Edit freely to add personal touches</span>
+                        </div>
+                    </div>
+
+                    <!-- Email Preview -->
+                    <div class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <span class="text-blue-700 font-semibold">📋 Email Preview</span>
+                            <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Live Preview</span>
+                            <span class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">AI-Enhanced</span>
+                        </div>
+                        <div class="text-sm text-gray-700">
+                            <p><strong>To:</strong> <span id="previewTo" class="text-gray-600">[Recipient Email]</span></p>
+                            <p class="mt-1"><strong>Subject:</strong> <span id="previewSubject" class="text-gray-600">[AI-Generated Subject]</span></p>
+                            <p class="mt-1"><strong>Attachments:</strong> AI-Optimized CV, AI-Written Cover Letter</p>
+                            <p class="mt-1"><strong>Content:</strong> <span class="text-green-600">✓ AI-personalized based on job requirements</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button type="button" onclick="backToPreview()" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold shadow-lg">
+                            ← Back to Preview
+                        </button>
+                        <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition font-semibold shadow-lg">
+                            📤 Send Application
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Info Box -->
+                <div class="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                    <p class="text-yellow-800 text-sm"><strong>🤖 AI Email Generation Benefits:</strong></p>
+                    <ul class="text-yellow-700 text-sm mt-2 space-y-1">
+                        <li>• <strong>Personalized:</strong> Tailored to your specific job and CV</li>
+                        <li>• <strong>Professional:</strong> Uses industry-appropriate language</li>
+                        <li>• <strong>Time-saving:</strong> No need to write from scratch</li>
+                        <li>• <strong>Customizable:</strong> Edit freely or regenerate with "Improve"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section (Download Only) -->
+        <div id="resultsSection" class="max-w-4xl mx-auto hidden fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                <div class="text-center mb-8">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Your AI Application Package is Ready!</h2>
+                    <p class="text-gray-600">Download your professionally optimized documents below</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <div class="border-2 border-purple-200 rounded-xl p-6 text-center hover:shadow-xl transition transform hover:-translate-y-1">
+                        <div class="text-purple-600 mb-4">
+                            <svg class="mx-auto h-14 w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Optimized CV</h3>
+                        <p class="text-gray-600 text-sm mb-4">ATS-compliant and tailored for the job</p>
+                        <a id="downloadCv" href="#" class="inline-flex items-center px-5 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition font-semibold text-sm shadow-lg cursor-pointer">
+                            📥 Download CV
+                        </a>
+                    </div>
+                    <div class="border-2 border-green-200 rounded-xl p-6 text-center hover:shadow-xl transition transform hover:-translate-y-1">
+                        <div class="text-green-600 mb-4">
+                            <svg class="mx-auto h-14 w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Cover Letter</h3>
+                        <p class="text-gray-600 text-sm mb-4">Professionally tailored to the job</p>
+                        <a id="downloadCover" href="#" class="inline-flex items-center px-5 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition font-semibold text-sm shadow-lg cursor-pointer">
+                            📥 Download Cover Letter
+                        </a>
+                    </div>
+                    <div class="border-2 border-blue-200 rounded-xl p-6 text-center hover:shadow-xl transition transform hover:-translate-y-1">
+                        <div class="text-blue-600 mb-4">
+                            <svg class="mx-auto h-14 w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Email Template</h3>
+                        <p class="text-gray-600 text-sm mb-4">AI-generated personalized email</p>
+                        <button onclick="copyEmailToClipboard()" class="inline-flex items-center px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold text-sm shadow-lg cursor-pointer">
+                            📋 Copy Email
+                        </button>
+                    </div>
+                </div>
+                <div id="successMessage" class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg mb-6 hidden">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-green-700"><strong>Success!</strong> Your AI-generated application package is ready. Good luck with your application!</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="errorMessage" class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg mb-6 hidden">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700"><strong>Error:</strong> <span id="errorText">Something went wrong.</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center space-x-4">
+                    <button onclick="resetForm()" class="px-8 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition font-semibold shadow-lg cursor-pointer">
+                        🔄 Create New Application
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Sent Confirmation Section -->
+        <div id="emailSentSection" class="max-w-4xl mx-auto hidden fade-in">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                <div class="text-center mb-8">
+                    <div class="text-6xl mb-4">🚀</div>
+                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Application Sent Successfully!</h2>
+                    <p class="text-gray-600">Your AI-optimized application has been submitted to the recipient</p>
+                </div>
+                
+                <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg mb-8">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-semibold text-green-800 mb-2">Email Details:</h3>
+                            <p class="text-sm text-green-700" id="sentEmailDetails">
+                                <strong>To:</strong> <span id="sentTo"></span><br>
+                                <strong>Subject:</strong> <span id="sentSubject"></span><br>
+                                <strong>Attachments:</strong> AI-Optimized CV, AI-Written Cover Letter<br>
+                                <strong>Content:</strong> <span class="font-semibold">🤖 AI-Generated & Personalized</span><br>
+                                <strong>Status:</strong> <span class="font-semibold">✅ Sent Successfully</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center space-y-4">
+                    <p class="text-gray-600 mb-6">Good luck with your application! 🍀 Your AI-enhanced application stands out!</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a id="downloadCvFinal" href="#" class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition font-semibold shadow-lg">
+                            📥 Download CV
+                        </a>
+                        <a id="downloadCoverFinal" href="#" class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition font-semibold shadow-lg">
+                            📥 Download Cover Letter
+                        </a>
+                        <button onclick="copyEmailTemplate()" class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-semibold shadow-lg">
+                            📋 Copy Email Template
+                        </button>
+                    </div>
+                    <div class="mt-6">
+                        <button onclick="resetForm()" class="px-8 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition font-semibold shadow-lg">
+                            🔄 Create Another Application
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="gradient-bg text-white py-8 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <p class="opacity-90">© 2026 AI Job Application Assistant | Powered by DeepSeek AI</p>
+            <p class="text-sm opacity-75 mt-2">AI-generated email content • ATS optimization • Professional formatting</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let currentSessionId = null;
+        let cvDownloadUrl = null;
+        let coverDownloadUrl = null;
+        let generatedEmailContent = null;
+        let activeFeedbackTab = 'cv';
+
+        // Color selection
+        $('.color-preview').on('click', function() {
+            $('.color-preview').removeClass('selected');
+            $(this).addClass('selected');
+            $('#highlightColor').val($(this).data('color'));
+        });
+
+        // Font size slider
+        $('#fontSize').on('input', function() {
+            $('#fontSizeDisplay').text($(this).val() + 'pt');
+        });
+
+        // Document tab switching
+        $('.document-tab').on('click', function() {
+            $('.document-tab').removeClass('active');
+            $(this).addClass('active');
+            
+            const tab = $(this).data('tab');
+            if (tab === 'cv') {
+                $('#cvPreview').removeClass('hidden');
+                $('#coverPreview').addClass('hidden');
+                $('#emailPreview').addClass('hidden');
+            } else if (tab === 'cover') {
+                $('#cvPreview').addClass('hidden');
+                $('#coverPreview').removeClass('hidden');
+                $('#emailPreview').addClass('hidden');
+            } else {
+                $('#cvPreview').addClass('hidden');
+                $('#coverPreview').addClass('hidden');
+                $('#emailPreview').removeClass('hidden');
+            }
+        });
+
+        // Feedback tab switching
+        $('.feedback-tab').on('click', function() {
+            $('.feedback-tab').removeClass('active');
+            $(this).addClass('active');
+            
+            const tab = $(this).data('feedback-tab');
+            activeFeedbackTab = tab;
+            
+            $('.feedback-tab-content').addClass('hidden');
+            $(`#${tab}FeedbackTab`).removeClass('hidden');
+        });
+
+        // Real-time email preview
+        $('#recipientEmail').on('input', function() {
+            const email = $(this).val();
+            if (email) {
+                $('#previewTo').text(email);
+            } else {
+                $('#previewTo').text('[Recipient Email]');
+            }
+        });
+
+        $('#emailSubject').on('input', function() {
+            const subject = $(this).val();
+            if (subject) {
+                $('#previewSubject').text(subject);
+            } else {
+                $('#previewSubject').text('[Email Subject]');
+            }
+        });
+
+        // Drag and drop
+        function setupDragDrop(areaId, inputId) {
+            const area = document.getElementById(areaId);
+            const input = document.getElementById(inputId);
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, preventDefaults, false);
+            });
+            function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+            ['dragenter', 'dragover'].forEach(eventName => {
+                area.addEventListener(eventName, () => area.classList.add('drag-over'), false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, () => area.classList.remove('drag-over'), false);
+            });
+            area.addEventListener('drop', handleDrop, false);
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                input.files = files;
+                input.dispatchEvent(new Event('change'));
+            }
+        }
+        setupDragDrop('cvUploadArea', 'cvFile');
+        setupDragDrop('jobUploadArea', 'jobFile');
+
+        // File upload handling
+        document.getElementById('cvUploadArea').addEventListener('click', () => {
+            document.getElementById('cvFile').click();
+        });
+        document.getElementById('cvFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const validTypes = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.bmp', '.tiff'];
+                const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+                if (!validTypes.includes(fileExt)) {
+                    alert('❌ Please upload a supported file format: PDF, DOC, DOCX, TXT, or Images');
+                    e.target.value = '';
+                    document.getElementById('cvFileName').classList.add('hidden');
+                    return;
+                }
+                
+                if (file.size > 16 * 1024 * 1024) {
+                    alert('❌ File size must be less than 16MB');
+                    e.target.value = '';
+                    document.getElementById('cvFileName').classList.add('hidden');
+                    return;
+                }
+                
+                document.getElementById('cvFileName').textContent = `✓ Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                document.getElementById('cvFileName').classList.remove('hidden');
+            }
+        });
+        
+        document.getElementById('jobUploadArea').addEventListener('click', () => {
+            document.getElementById('jobFile').click();
+        });
+        document.getElementById('jobFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const validTypes = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.bmp', '.tiff'];
+                const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+                if (!validTypes.includes(fileExt)) {
+                    alert('❌ Please upload a supported file format: PDF, DOC, DOCX, TXT, or Images');
+                    e.target.value = '';
+                    document.getElementById('jobFileName').classList.add('hidden');
+                    return;
+                }
+                
+                if (file.size > 16 * 1024 * 1024) {
+                    alert('❌ File size must be less than 16MB');
+                    e.target.value = '';
+                    document.getElementById('jobFileName').classList.add('hidden');
+                    return;
+                }
+                
+                document.getElementById('jobFileName').textContent = `✓ Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                document.getElementById('jobFileName').classList.remove('hidden');
+            }
+        });
+
+        // Form submission
+        $('#uploadForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const jobLink = $('#jobLink').val().trim();
+            const jobFile = $('#jobFile')[0].files[0];
+            const cvFile = $('#cvFile')[0].files[0];
+            
+            if (!cvFile) {
+                alert('⚠️ Please upload your CV');
+                return;
+            }
+            
+            if (!jobLink && !jobFile) {
+                alert('⚠️ Please provide either a job URL or upload a job description file');
+                return;
+            }
+            
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalText = submitBtn.html();
+            submitBtn.html('<span class="flex items-center justify-center"><svg class="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> AI is generating your application...</span>');
+            submitBtn.prop('disabled', true);
+            
+            const formData = new FormData(this);
+            
+            $('html, body').animate({ scrollTop: 0 }, 300);
+            setTimeout(() => {
+                $('#progressSection').removeClass('hidden').addClass('fade-in');
+                $('html, body').animate({ scrollTop: $('#progressSection').offset().top - 50 }, 500);
+            }, 300);
+            
+            $.ajax({
+                url: '/upload',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.error) {
+                        alert('❌ Error: ' + response.error);
+                        resetSubmitButton(submitBtn, originalText);
+                        return;
+                    }
+                    console.log('✅ Upload successful:', response);
+                    currentSessionId = response.session_id;
+                    
+                    // Store initial email content
+                    if (response.email_content) {
+                        generatedEmailContent = response.email_content;
+                        console.log('📧 Initial email content:', generatedEmailContent);
+                    }
+                    
+                    checkProgress(response.session_id);
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Upload failed. Please try again.';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMessage = response.error || errorMessage;
+                    } catch (e) {
+                        errorMessage = xhr.responseText || errorMessage;
+                    }
+                    alert('❌ Error: ' + errorMessage);
+                    resetSubmitButton(submitBtn, originalText);
+                    $('#progressSection').addClass('hidden');
+                }
+            });
+        });
+
+        function resetSubmitButton(btn, originalText) {
+            btn.html(originalText);
+            btn.prop('disabled', false);
+        }
+
+        function checkProgress(sessionId) {
+            $.get(`/progress/${sessionId}`, function(progress) {
+                console.log('📊 Progress update:', progress);
+                
+                const percentage = progress.percentage || 0;
+                const status = progress.status || 'unknown';
+                const message = progress.message || '';
+                
+                $('#progressBar').css('width', percentage + '%');
+                $('#progressPercentage').text(percentage + '%');
+                $('#progressMessage').text(message);
+                
+                const statusText = $('#statusText');
+                const currentStatus = $('#currentStatus');
+                currentStatus.removeClass('hidden');
+                
+                if (status === 'processing') {
+                    statusText.text('AI Processing').removeClass().addClass('status-processing');
+                    
+                    // Update step messages based on progress
+                    if (percentage >= 40) {
+                        $('#step2Text').text('AI Document Generation ✓');
+                        $('#step2').addClass('completed').html('<span>✓</span>');
+                    }
+                    if (percentage >= 60) {
+                        $('#step3Text').text('Email Content Generation ✓');
+                        $('#step3').addClass('completed').html('<span>✓</span>');
+                    }
+                    if (percentage >= 80) {
+                        $('#step4Text').text('Quality Check ✓');
+                        $('#step4').addClass('completed').html('<span>✓</span>');
+                    }
+                } else if (status === 'completed') {
+                    statusText.text('Completed').removeClass().addClass('status-completed');
+                    // Mark all steps as completed
+                    $('#step2, #step3, #step4').addClass('completed').html('<span>✓</span>');
+                    $('#step2Text').text('AI Document Generation ✓');
+                    $('#step3Text').text('Email Content Generation ✓');
+                    $('#step4Text').text('Quality Check ✓');
+                } else if (status === 'error') {
+                    statusText.text('Error').removeClass().addClass('status-error');
+                }
+                
+                updateProgressSteps(percentage);
+                
+                if (status === 'error') {
+                    showError(progress.message || 'An error occurred during processing.');
+                    return;
+                }
+                
+                // Check for AI-generated email content
+                if (progress.email_content) {
+                    generatedEmailContent = progress.email_content;
+                    console.log('📧 Received AI-generated email content:', generatedEmailContent);
+                    
+                    // Update all email previews
+                    updateEmailPreviews(generatedEmailContent);
+                }
+                
+                if (percentage < 100) {
+                    setTimeout(() => checkProgress(sessionId), 2000);
+                } else {
+                    // Show preview instead of results
+                    showPreview(sessionId);
+                }
+            }).fail(function(xhr) {
+                console.error('❌ Progress check failed:', xhr);
+                setTimeout(() => checkProgress(sessionId), 2000);
+            });
+        }
+
+        function updateEmailPreviews(emailContent) {
+            if (!emailContent) return;
+            
+            // Update main email preview section
+            $('#previewEmailSubject').text(emailContent.subject || 'AI-Generated Subject');
+            $('#previewEmailBody').html((emailContent.body || 'AI is generating email content...').replace(/\n/g, '<br>'));
+            
+            // Update email tab preview
+            if ($('#emailContentDisplay').is(':hidden')) {
+                $('#emailContentPlaceholder').addClass('hidden');
+                $('#emailContentDisplay').removeClass('hidden');
+            }
+            $('#aiEmailSubject').text(emailContent.subject || 'Application for Position');
+            $('#aiEmailBody').html((emailContent.body || '').replace(/\n/g, '<br>'));
+            
+            // Update email form fields
+            $('#emailSubject').val(emailContent.subject || '');
+            $('#emailMessage').val(emailContent.body || '');
+            $('#previewSubject').text(emailContent.subject || '[AI-Generated Subject]');
+            
+            console.log('✅ Updated all email previews with AI-generated content');
+        }
+
+        function updateProgressSteps(percentage) {
+            const steps = [
+                { id: 'step2', threshold: 30, text: 'AI Document Generation ⏳' },
+                { id: 'step3', threshold: 60, text: 'Email Content Generation ⏳' },
+                { id: 'step4', threshold: 80, text: 'Quality Check ⏳' }
+            ];
+            
+            steps.forEach((step, index) => {
+                const element = $(`#${step.id}`);
+                const textElement = $(`#${step.id}Text`);
+                
+                if (percentage >= step.threshold) {
+                    element.removeClass('active').addClass('completed');
+                    element.html('<span>✓</span>');
+                    textElement.text(step.text.replace('⏳', '✓'));
+                } else if (percentage >= (steps[index - 1]?.threshold || 0)) {
+                    element.addClass('active');
+                    textElement.text(step.text);
+                }
+            });
+        }
+
+        // Show preview section
+        function showPreview(sessionId) {
+            console.log('👀 Showing preview for session:', sessionId);
+            
+            cvDownloadUrl = `/download/${sessionId}/cv`;
+            coverDownloadUrl = `/download/${sessionId}/cover`;
+            
+            // Load document previews
+            loadDocumentPreview(sessionId);
+            
+            // Update email previews with AI-generated content
+            if (generatedEmailContent) {
+                updateEmailPreviews(generatedEmailContent);
+                console.log('✅ Email previews updated with AI-generated content');
+            }
+            
+            setTimeout(() => {
+                $('#progressSection').addClass('hidden');
+                $('#previewSection').removeClass('hidden').addClass('fade-in');
+                $('html, body').animate({ scrollTop: $('#previewSection').offset().top - 50 }, 500);
+            }, 1000);
+        }
+
+        // Load document preview (text extraction from generated files)
+        function loadDocumentPreview(sessionId) {
+            // Show loading state
+            $('#cvPreview').html('<div class="text-center py-12"><div class="ai-thinking mb-4"><span>🤖 Loading CV preview...</span><div class="ai-thinking-dots"><span></span><span></span><span></span></div></div><p class="text-gray-600">Fetching AI-optimized CV content...</p></div>');
+            $('#coverPreview').html('<div class="text-center py-12"><div class="ai-thinking mb-4"><span>🤖 Loading cover letter preview...</span><div class="ai-thinking-dots"><span></span><span></span><span></span></div></div><p class="text-gray-600">Fetching AI-written cover letter...</p></div>');
+            
+            // Fetch actual document content
+            $.get(`/get_document_content/${sessionId}`, function(response) {
+                if (response.success) {
+                    // Display actual document content
+                    displayDocumentContent(response.cv_content, response.cover_content);
+                    console.log('✅ Document content loaded successfully');
+                    console.log(`📊 CV: ${response.cv_length} chars, Cover: ${response.cover_length} chars`);
+                } else {
+                    // Fallback to placeholder content
+                    displayPlaceholderContent();
+                    console.log('⚠️ Could not load document content, using placeholder');
+                }
+            }).fail(function(xhr) {
+                // Fallback to placeholder content
+                displayPlaceholderContent();
+                console.log('⚠️ Failed to fetch document content, using placeholder');
+            });
+        }
+
+        function displayDocumentContent(cvContent, coverContent) {
+            // Display CV content
+            $('#cvPreview').html(`
+                <div class="space-y-4">
+                    <div class="document-preview-header">
+                        <h3 class="text-2xl font-bold text-gray-800">AI-Optimized CV Preview</h3>
+                        <button onclick="showFeedback()" class="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition text-sm">
+                            ✏️ Request Changes
+                        </button>
+                    </div>
+                    <div class="document-content">
+                        ${formatDocumentPreview(cvContent)}
+                    </div>
+                    <div class="text-sm text-gray-500 mt-4">
+                        <span class="inline-flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span> ATS-Optimized</span>
+                        <span class="inline-flex items-center ml-4"><span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span> AI-Enhanced</span>
+                        <span class="inline-flex items-center ml-4"><span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span> Keyword-Tailored</span>
+                    </div>
+                </div>
+            `);
+            
+            // Display Cover Letter content
+            $('#coverPreview').html(`
+                <div class="space-y-4">
+                    <div class="document-preview-header">
+                        <h3 class="text-2xl font-bold text-gray-800">AI-Written Cover Letter Preview</h3>
+                        <button onclick="showFeedback()" class="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition text-sm">
+                            ✏️ Request Changes
+                        </button>
+                    </div>
+                    <div class="document-content">
+                        ${formatDocumentPreview(coverContent)}
+                    </div>
+                    <div class="text-sm text-gray-500 mt-4">
+                        <span class="inline-flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span> Personalized</span>
+                        <span class="inline-flex items-center ml-4"><span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span> Job-Tailored</span>
+                        <span class="inline-flex items-center ml-4"><span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span> Professional Tone</span>
+                    </div>
+                </div>
+            `);
+        }
+
+        function formatDocumentPreview(content) {
+            if (!content) return '<p class="text-gray-500 italic">Content not available for preview</p>';
+            
+            // Basic formatting for preview display
+            return content
+                .replace(/\n/g, '<br>')
+                .replace(/•/g, '<span class="inline-block mr-2">•</span>')
+                .replace(/===OPTIMIZED_CV_START===/gi, '<div class="bg-gray-100 p-2 rounded mb-4 font-bold">AI-OPTIMIZED CV</div>')
+                .replace(/===OPTIMIZED_CV_END===/gi, '<div class="border-t border-gray-300 mt-4 pt-4"></div>')
+                .replace(/===COVER_LETTER_START===/gi, '<div class="bg-gray-100 p-2 rounded mb-4 font-bold">AI-WRITTEN COVER LETTER</div>')
+                .replace(/===COVER_LETTER_END===/gi, '<div class="border-t border-gray-300 mt-4 pt-4"></div>')
+                .replace(/(PROFESSIONAL SUMMARY|WORK EXPERIENCE|EDUCATION|SKILLS|CERTIFICATIONS)/gi, '<h4 class="font-bold text-lg mt-6 mb-3 text-gray-800 pb-2 border-b">$1</h4>')
+                .replace(/(Key Responsibilities:|Key Achievements:|Technical Skills:|Soft Skills:)/gi, '<h5 class="font-semibold mt-4 mb-2 text-gray-700">$1</h5>')
+                .replace(/(Dear Hiring Manager,)/gi, '<div class="font-semibold text-gray-800 mt-4">$1</div>')
+                .replace(/(Sincerely,|Best regards,|Yours truly,)/gi, '<div class="font-semibold mt-8">$1</div>');
+        }
+
+        function displayPlaceholderContent() {
+            // CV placeholder content
+            $('#cvPreview').html(`
+                <div class="space-y-4">
+                    <div class="document-preview-header">
+                        <h3 class="text-2xl font-bold text-gray-800">AI-Optimized CV Preview</h3>
+                        <button onclick="showFeedback()" class="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition text-sm">
+                            ✏️ Request Changes
+                        </button>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <p class="text-sm text-gray-600 mb-2"><strong>✅ ATS-Optimized</strong> - Formatted for Applicant Tracking Systems</p>
+                        <p class="text-sm text-gray-600 mb-2"><strong>✅ AI-Enhanced</strong> - Improved with AI suggestions</p>
+                        <p class="text-sm text-gray-600 mb-2"><strong>✅ Professional Layout</strong> - Clean and modern AI-designed format</p>
+                        <p class="text-sm text-gray-600"><strong>✅ Highlight Keywords</strong> - Industry-relevant terms included</p>
+                    </div>
+                    <p class="text-gray-600 mt-4">Your CV has been AI-optimized with:</p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1">
+                        <li>AI-enhanced formatting and structure</li>
+                        <li>Keyword optimization for ATS</li>
+                        <li>Improved professional summary</li>
+                        <li>Quantified achievements</li>
+                        <li>Tailored skills section</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-blue-50 rounded">
+                        <p class="text-sm text-blue-800"><strong>🤖 AI Benefit:</strong> Download the full document to see all AI-generated improvements and formatting</p>
+                    </div>
+                </div>
+            `);
+            
+            // Cover Letter placeholder content
+            $('#coverPreview').html(`
+                <div class="space-y-4">
+                    <div class="document-preview-header">
+                        <h3 class="text-2xl font-bold text-gray-800">AI-Written Cover Letter Preview</h3>
+                        <button onclick="showFeedback()" class="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition text-sm">
+                            ✏️ Request Changes
+                        </button>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <p class="text-sm text-gray-600 mb-2"><strong>✅ AI-Personalized</strong> - Tailored to the specific job posting</p>
+                        <p class="text-sm text-gray-600 mb-2"><strong>✅ Professional Tone</strong> - AI-generated business language</p>
+                        <p class="text-sm text-gray-600 mb-2"><strong>✅ Compelling Content</strong> - AI-highlights your best fit</p>
+                        <p class="text-sm text-gray-600"><strong>✅ Proper Format</strong> - Standard business letter layout</p>
+                    </div>
+                    <p class="text-gray-600 mt-4">Your AI-generated cover letter includes:</p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1">
+                        <li>Strong AI-crafted opening paragraph</li>
+                        <li>Relevant experience highlights</li>
+                        <li>Connection to job requirements</li>
+                        <li>Enthusiasm for the role</li>
+                        <li>Professional closing</li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-blue-50 rounded">
+                        <p class="text-sm text-blue-800"><strong>🤖 AI Benefit:</strong> Review the full document to ensure all details are accurate and personalized</p>
+                    </div>
+                </div>
+            `);
+        }
+
+        // Show feedback section
+        function showFeedback() {
+            // Reset to CV tab by default
+            $('.feedback-tab').removeClass('active');
+            $('.feedback-tab[data-feedback-tab="cv"]').addClass('active');
+            $('.feedback-tab-content').addClass('hidden');
+            $('#cvFeedbackTab').removeClass('hidden');
+            activeFeedbackTab = 'cv';
+            
+            $('#feedbackSection').removeClass('hidden');
+            $('html, body').animate({ scrollTop: $('#feedbackSection').offset().top - 50 }, 500);
+        }
+
+        // Cancel feedback
+        function cancelFeedback() {
+            $('#feedbackSection').addClass('hidden');
+            $('#cvFeedback').val('');
+            $('#coverFeedback').val('');
+            $('#emailFeedback').val('');
+        }
+
+        // Submit feedback and regenerate documents
+        function submitFeedback() {
+            const cvFeedback = $('#cvFeedback').val().trim();
+            const coverFeedback = $('#coverFeedback').val().trim();
+            const emailFeedback = $('#emailFeedback').val().trim();
+            
+            if (!cvFeedback && !coverFeedback && !emailFeedback) {
+                alert('Please specify at least one change to make.');
+                return;
+            }
+            
+            if (!currentSessionId) {
+                alert('No active session found. Please regenerate from the beginning.');
+                return;
+            }
+            
+            if (confirm('Apply these changes and regenerate documents? This may take 2-3 minutes.')) {
+                // Prepare feedback data
+                const feedbackData = {
+                    session_id: currentSessionId,
+                    cv_feedback: cvFeedback,
+                    cover_feedback: coverFeedback,
+                    email_feedback: emailFeedback
+                };
+                
+                console.log('📝 Sending feedback:', feedbackData);
+                
+                // Show progress section again
+                $('#previewSection').addClass('hidden');
+                $('#feedbackSection').addClass('hidden');
+                $('#progressSection').removeClass('hidden');
+                
+                // Reset progress
+                $('#progressBar').css('width', '40%');
+                $('#progressPercentage').text('40%');
+                $('#progressMessage').text('Processing your feedback with AI...');
+                
+                // Reset progress steps
+                $('#step2, #step3, #step4').removeClass('completed active');
+                $('#step2').html('2');
+                $('#step3').html('3');
+                $('#step4').html('4');
+                $('#step2Text').text('AI Document Generation');
+                $('#step3Text').text('Email Content Generation');
+                $('#step4Text').text('Quality Check');
+                
+                // Clear feedback fields
+                $('#cvFeedback').val('');
+                $('#coverFeedback').val('');
+                $('#emailFeedback').val('');
+                
+                // Send feedback to backend
+                $.ajax({
+                    url: '/regenerate',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(feedbackData),
+                    success: function(response) {
+                        if (response.error) {
+                            alert('❌ Error: ' + response.error);
+                            showError(response.error);
+                            return;
+                        }
+                        
+                        console.log('✅ Feedback processed successfully:', response);
+                        currentSessionId = response.session_id;
+                        checkProgress(response.session_id);
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Failed to process feedback. Please try again.';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.error || errorMessage;
+                        } catch (e) {
+                            errorMessage = xhr.responseText || errorMessage;
+                        }
+                        alert('❌ Error: ' + errorMessage);
+                        
+                        // Go back to preview
+                        $('#progressSection').addClass('hidden');
+                        $('#previewSection').removeClass('hidden');
+                        $('#feedbackSection').removeClass('hidden');
+                    }
+                });
+            }
+        }
+
+        // Proceed to email section
+        function proceedToEmail() {
+            $('#previewSection').addClass('hidden');
+            $('#emailSection').removeClass('hidden').addClass('fade-in');
+            
+            // Auto-fill email fields with AI-generated content
+            if (generatedEmailContent) {
+                $('#emailSubject').val(generatedEmailContent.subject);
+                $('#emailMessage').val(generatedEmailContent.body);
+                
+                // Update preview
+                $('#previewSubject').text(generatedEmailContent.subject);
+                $('#previewTo').text($('#recipientEmail').val() || '[Recipient Email]');
+                
+                console.log('✅ Auto-filled email fields with AI-generated content');
+                showNotification('✅ AI-generated email content loaded! You can edit or regenerate.', 'success');
+            } else {
+                // If no AI content yet, try to fetch it
+                if (currentSessionId) {
+                    $.ajax({
+                        url: '/generate_email_content',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            session_id: currentSessionId
+                        }),
+                        success: function(response) {
+                            if (response.success) {
+                                generatedEmailContent = {
+                                    subject: response.subject,
+                                    body: response.body
+                                };
+                                $('#emailSubject').val(response.subject);
+                                $('#emailMessage').val(response.body);
+                                $('#previewSubject').text(response.subject);
+                                showNotification('✅ AI-generated email content loaded!', 'success');
+                            }
+                        }
+                    });
+                }
+            }
+            
+            $('html, body').animate({ scrollTop: $('#emailSection').offset().top - 50 }, 500);
+        }
+
+        // Generate better email content
+        function generateBetterEmail() {
+            if (!currentSessionId) {
+                showNotification('⚠️ Please generate documents first', 'warning');
+                return;
+            }
+            
+            console.log('✨ Generating improved email content for session:', currentSessionId);
+            
+            // Show loading state
+            const originalSubject = $('#emailSubject').val();
+            const originalBody = $('#emailMessage').val();
+            
+            $('#emailSubject').val('🤖 AI is generating improved subject...');
+            $('#emailMessage').val('🤖 AI is generating improved email content...\n\nPlease wait while AI creates alternative versions...');
+            
+            $.ajax({
+                url: '/generate_email_content',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    session_id: currentSessionId
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        $('#emailSubject').val(response.subject);
+                        $('#emailMessage').val(response.body);
+                        
+                        // Update preview
+                        $('#previewSubject').text(response.subject);
+                        
+                        // Update generatedEmailContent
+                        generatedEmailContent = {
+                            subject: response.subject,
+                            body: response.body
+                        };
+                        
+                        showNotification('✅ AI generated improved email content!', 'success');
+                        console.log('✅ Improved email content:', response);
+                    } else {
+                        $('#emailSubject').val(originalSubject);
+                        $('#emailMessage').val(originalBody);
+                        showNotification('⚠️ Could not generate improved content', 'warning');
+                    }
+                },
+                error: function(xhr) {
+                    $('#emailSubject').val(originalSubject);
+                    $('#emailMessage').val(originalBody);
+                    showNotification('❌ Error generating email content', 'error');
+                    console.error('❌ Error generating email content:', xhr);
+                }
+            });
+        }
+
+        // Back to preview
+        function backToPreview() {
+            $('#emailSection').addClass('hidden');
+            $('#previewSection').removeClass('hidden');
+            $('html, body').animate({ scrollTop: $('#previewSection').offset().top - 50 }, 500);
+        }
+
+        // Email form submission
+        $('#emailForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const recipientEmail = $('#recipientEmail').val().trim();
+            const emailSubject = $('#emailSubject').val().trim();
+            const ccEmails = $('#ccEmails').val().trim();
+            const bccEmails = $('#bccEmails').val().trim();
+            const emailMessage = $('#emailMessage').val().trim();
+            
+            console.log("📧 Email form submitted with data:");
+            console.log("  - Recipient:", recipientEmail);
+            console.log("  - Subject:", emailSubject);
+            console.log("  - CC:", ccEmails);
+            console.log("  - BCC:", bccEmails);
+            console.log("  - Session ID:", currentSessionId);
+            
+            if (!recipientEmail) {
+                showNotification('⚠️ Please enter recipient email', 'warning');
+                return;
+            }
+            
+            if (!emailSubject) {
+                showNotification('⚠️ Please enter email subject', 'warning');
+                return;
+            }
+            
+            if (!currentSessionId) {
+                showNotification('⚠️ No documents found. Please generate documents first.', 'warning');
+                return;
+            }
+            
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalText = submitBtn.html();
+            submitBtn.html('<span class="flex items-center justify-center"><svg class="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Sending AI-enhanced application...</span>');
+            submitBtn.prop('disabled', true);
+            
+            // Send email via API
+            console.log("📤 Sending POST request to /send_email...");
+            
+            $.ajax({
+                url: '/send_email',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    session_id: currentSessionId,
+                    recipient_email: recipientEmail,
+                    cc_emails: ccEmails,
+                    bcc_emails: bccEmails,
+                    subject: emailSubject,
+                    message: emailMessage
+                }),
+                success: function(response) {
+                    console.log("✅ AJAX success response:", response);
+                    
+                    if (response.success) {
+                        // Store email details for confirmation
+                        $('#sentTo').text(recipientEmail);
+                        $('#sentSubject').text(emailSubject);
+                        
+                        // Update download links in confirmation section
+                        $('#downloadCvFinal').attr('href', cvDownloadUrl);
+                        $('#downloadCoverFinal').attr('href', coverDownloadUrl);
+                        
+                        // Show confirmation
+                        $('#emailSection').addClass('hidden');
+                        $('#emailSentSection').removeClass('hidden').addClass('fade-in');
+                        $('html, body').animate({ scrollTop: $('#emailSentSection').offset().top - 50 }, 500);
+                        
+                        console.log('✅ Email sent successfully:', response);
+                        showNotification('✅ AI-enhanced application sent successfully!', 'success');
+                    } else {
+                        console.error('❌ Email sending failed:', response);
+                        showNotification('❌ Failed to send email: ' + (response.error || 'Unknown error'), 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ AJAX error:', {
+                        status: status,
+                        error: error,
+                        responseText: xhr.responseText,
+                        statusText: xhr.statusText
+                    });
+                    
+                    let errorMessage = 'Failed to send email. Please try again.';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMessage = response.error || errorMessage;
+                    } catch (e) {
+                        errorMessage = xhr.responseText || errorMessage;
+                    }
+                    showNotification('❌ Error: ' + errorMessage, 'error');
+                },
+                complete: function() {
+                    submitBtn.html(originalText);
+                    submitBtn.prop('disabled', false);
+                }
+            });
+        });
+
+        function showResults(sessionId) {
+            console.log('Showing results for session:', sessionId);
+            
+            cvDownloadUrl = `/download/${sessionId}/cv`;
+            coverDownloadUrl = `/download/${sessionId}/cover`;
+            
+            $('#downloadCv').attr('href', cvDownloadUrl);
+            $('#downloadCover').attr('href', coverDownloadUrl);
+            
+            $('#successMessage').removeClass('hidden');
+            $('#errorMessage').addClass('hidden');
+            
+            setTimeout(() => {
+                $('#progressSection').addClass('hidden');
+                $('#resultsSection').removeClass('hidden').addClass('fade-in');
+                $('html, body').animate({ scrollTop: $('#resultsSection').offset().top - 50 }, 500);
+            }, 1000);
+        }
+
+        function showError(errorMessage) {
+            console.error('Showing error:', errorMessage);
+            
+            $('#errorText').text(errorMessage);
+            $('#successMessage').addClass('hidden');
+            $('#errorMessage').removeClass('hidden');
+            
+            setTimeout(() => {
+                $('#progressSection').addClass('hidden');
+                $('#resultsSection').removeClass('hidden').addClass('fade-in');
+                $('html, body').animate({ scrollTop: $('#resultsSection').offset().top - 50 }, 500);
+            }, 1000);
+        }
+
+        // Copy email to clipboard
+        function copyEmailToClipboard() {
+            if (!generatedEmailContent) {
+                showNotification('⚠️ No email content available to copy', 'warning');
+                return;
+            }
+            
+            const emailText = `Subject: ${generatedEmailContent.subject}\n\n${generatedEmailContent.body}`;
+            
+            navigator.clipboard.writeText(emailText).then(() => {
+                showNotification('✅ AI-generated email copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('❌ Failed to copy to clipboard', 'error');
+            });
+        }
+
+        // Copy email template
+        function copyEmailTemplate() {
+            const subject = $('#sentSubject').text();
+            const body = generatedEmailContent ? generatedEmailContent.body : '';
+            
+            if (!subject || !body) {
+                showNotification('⚠️ No email content available', 'warning');
+                return;
+            }
+            
+            const emailText = `Subject: ${subject}\n\n${body}`;
+            
+            navigator.clipboard.writeText(emailText).then(() => {
+                showNotification('✅ Email template copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('❌ Failed to copy to clipboard', 'error');
+            });
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const colors = {
+                'success': 'bg-green-100 border-green-500 text-green-700',
+                'error': 'bg-red-100 border-red-500 text-red-700',
+                'warning': 'bg-yellow-100 border-yellow-500 text-yellow-700',
+                'info': 'bg-blue-100 border-blue-500 text-blue-700'
+            };
+            
+            const icons = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            };
+            
+            const notificationId = 'notification-' + Date.now();
+            const notification = $(`
+                <div id="${notificationId}" class="notification fixed top-4 right-4 ${colors[type]} border-l-4 p-4 rounded shadow-lg z-50 max-w-md">
+                    <div class="flex items-center">
+                        <span class="mr-3">${icons[type]}</span>
+                        <span>${message}</span>
+                    </div>
+                </div>
+            `);
+            
+            $('body').append(notification);
+            setTimeout(() => $(`#${notificationId}`).remove(), 3000);
+        }
+
+        function resetForm() {
+            $('#cvFile').val('');
+            $('#jobFile').val('');
+            $('#cvFileName').addClass('hidden');
+            $('#jobFileName').addClass('hidden');
+            $('#jobLink').val('');
+            
+            $('.color-preview').removeClass('selected');
+            $('.color-preview[data-color="BFBFBF"]').addClass('selected');
+            $('#highlightColor').val('BFBFBF');
+            $('#fontFamily').val('Calibri');
+            $('#fontSize').val('10');
+            $('#fontSizeDisplay').text('10pt');
+            
+            // Reset email form
+            $('#recipientEmail').val('');
+            $('#ccEmails').val('');
+            $('#bccEmails').val('');
+            $('#emailSubject').val('');
+            $('#emailMessage').val('');
+            
+            // Reset preview
+            $('#previewTo').text('[Recipient Email]');
+            $('#previewSubject').text('[Email Subject]');
+            $('#previewEmailSubject').text('AI is generating personalized subject...');
+            $('#previewEmailBody').text('🤖 DeepSeek AI is analyzing your job description and CV to create a perfectly tailored email...');
+            
+            // Reset feedback form
+            $('#cvFeedback').val('');
+            $('#coverFeedback').val('');
+            $('#emailFeedback').val('');
+            $('#feedbackSection').addClass('hidden');
+            
+            // Hide all sections
+            $('#progressSection').addClass('hidden');
+            $('#previewSection').addClass('hidden');
+            $('#emailSection').addClass('hidden');
+            $('#resultsSection').addClass('hidden');
+            $('#emailSentSection').addClass('hidden');
+            
+            // Reset variables
+            currentSessionId = null;
+            cvDownloadUrl = null;
+            coverDownloadUrl = null;
+            generatedEmailContent = null;
+            activeFeedbackTab = 'cv';
+            
+            $('html, body').animate({ scrollTop: 0 }, 300);
+            
+            const submitBtn = $('#uploadForm button[type="submit"]');
+            submitBtn.html('✨ Generate Complete Application Package');
+            submitBtn.prop('disabled', false);
+            
+            showNotification('📝 Form reset. Ready to create a new AI-enhanced application!', 'info');
+        }
+
+        // Download link handler
+        $(document).on('click', '#downloadCv, #downloadCover, #downloadCvFinal, #downloadCoverFinal', function(e) {
+            e.preventDefault();
+            const url = $(this).attr('href');
+            if (url && url !== '#') {
+                window.open(url, '_blank');
+            }
+        });
+
+        // Initialize
+        $(document).ready(function() {
+            console.log('🚀 AI Job Application Assistant initialized');
+            
+            // Test backend connection
+            $.get('/health')
+                .done(function(data) {
+                    console.log('✅ Backend status:', data.status);
+                    if (data.status === 'healthy') {
+                        console.log('✅ Backend is connected and ready');
+                        console.log('📧 Email enabled:', data.email_enabled);
+                        console.log('📄 Document processor:', data.document_processor);
+                        console.log('🤖 AI email generation:', 'Enabled');
+                    } else {
+                        console.warn('⚠️ Backend status:', data.status);
+                        showNotification('⚠️ Backend connection issue detected', 'warning');
+                    }
+                })
+                .fail(function() {
+                    console.error('❌ Cannot connect to backend');
+                    showNotification('❌ Cannot connect to server. Please check if backend is running.', 'error');
+                });
+        });
+    </script>
+</body>
+</html>

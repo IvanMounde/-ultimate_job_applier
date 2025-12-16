@@ -1,0 +1,15 @@
+# requirements.txt
+flask==2.3.3
+selenium==4.15.0
+requests==2.31.0
+beautifulsoup4==4.12.2
+pytesseract==0.3.10
+pillow==10.0.1
+pypdf2==3.0.1
+python-docx==1.1.0
+reportlab==4.0.4
+pdfplumber
+pyperclip
+psutil
+pylatex
+python-dotenv
