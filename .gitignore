@@ -2,3 +2,10 @@
 .env
 *.env
 .env.local
+uploads/
+generated_documents/
+jobautomation/
+venv/
+.venv/
+__pycache__/
+*.pyc
